@@ -36,6 +36,9 @@ int main(int ac, char **av)
 {
 	void	*file;
 	Elf64_Ehdr	hdr;
+	Elf64_Shdr	*sections;
+	Elf64_Shdr	shstr_header;
+
 
 	if (ac != 2)
 	{
@@ -52,5 +55,9 @@ int main(int ac, char **av)
 		dprintf(2, "%s: error: File architecture for %s not suported. x86_64 only\n", av[0], av[1]);
 		return (3);
 	}
-
+	sections = hdr.e_shoff + file;
+	shstr_header = *(Elf64_Shdr*)(file + hdr.e_shoff + hdr.e_shstrndx * hdr.e_shentsize);
+	printf("%d\n", shstr_header.sh_name);
+	printf("%X\n", shstr_header.sh_entsize);
+	printf("%s\n", file + shstr_header.sh_offset + 17 * shstr_header.sh_entsize);
 }
