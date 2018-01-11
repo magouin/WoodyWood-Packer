@@ -48,13 +48,25 @@ char	*get_shstrtab(void *file, Elf64_Ehdr *hdr)
 	return (file + shstr_header->sh_offset);
 }
 
+void print_maps()
+{
+	char buffer[4000];
+	int fd = open("/proc/self/maps", O_RDONLY);
+	int r = read(fd, buffer, 3999);
+	buffer[r] = '\0';
+	printf("%s\n", buffer);
+}
+
 int main(int ac, char **av)
 {
+	print_maps();
+
 	void	*file;
 	Elf64_Ehdr	*hdr;
 	Elf64_Shdr	*sections;
 	void	*str_tab;
 	Elf64_Shdr	*s_hdr;
+	Elf64_Phdr	*p_hdr;
 	size_t size;
 
 	if (ac != 2)
@@ -79,11 +91,22 @@ int main(int ac, char **av)
 	while (nbr < hdr->e_shnum)
 	{
 		s_hdr = file + hdr->e_shoff + nbr * hdr->e_shentsize;
-		printf("%-2d - [%s] - offset : %p\n", nbr, s_hdr->sh_name + str_tab, s_hdr->sh_offset);
 		if (ft_strequ(s_hdr->sh_name + str_tab, ".text"))
 		{
-			s_hdr->sh_flags |= SHF_WRITE;
+			printf("section text offset : %p\n", s_hdr->sh_offset);
 		}
+		nbr++;
+	}
+
+	nbr = 0;
+	while (nbr < hdr->e_phnum)
+	{
+		p_hdr = file + hdr->e_phoff + nbr * hdr->e_phentsize;
+		printf("offset : %p - size : %X\n", p_hdr->p_offset, p_hdr->p_filesz);
+		// if (nbr == 2)
+		// {
+		p_hdr->p_flags |= PF_W;
+		// }
 		nbr++;
 	}
 	write_woody(file, size);
