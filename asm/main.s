@@ -1,30 +1,25 @@
-section     .init, exec
-global			_init
+section .text
+	global pouet
 
-_init:
-	mov     edx,3       	                      ;message length
-	mov     ecx,msg_hi	                       ;message to write
-	mov     ebx,1                               ;file descriptor (stdout)
-	mov     eax,4                               ;system call number (sys_write)
-	int     0x80                                ;call kernel
+pouet:
+		push rdx
+		push rcx
+		push rbx
 
 
-section     .text
-global      _start                              ;must be declared for linker (ld)
+        mov rax, 4       ;syscall write
+        mov rbx, 1       ;stdout is 1
+		lea rcx, [rel msg]
+        mov rdx, msg_end - msg       ;length of the string
+        int 0x80
 
-_start:                                         ;tell linker entry point
+		mov rax,0x22222222
+		pop rbx
+		pop rcx
+		pop rdx
+		jmp rax
 
-    mov     edx,len                             ;message length
-    mov     ecx,msg                             ;message to write
-    mov     ebx,1                               ;file descriptor (stdout)
-    mov     eax,4                               ;system call number (sys_write)
-    int     0x80                                ;call kernel
+align 8
 
-    mov     eax,1                               ;system call number (sys_exit)
-    int     0x80                                ;call kernel
-
-section     .data
-
-msg     db  'Hello, world!',0xa                 ;our dear string
-len     equ $ - msg                             ;length of our dear string
-msg_hi  db  'Hi',0xa                 ;our dear string
+        msg db 'hello ! Ca va ?',0xa
+		msg_end db 0x0

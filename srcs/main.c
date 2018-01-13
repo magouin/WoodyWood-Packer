@@ -22,7 +22,7 @@ void *open_file(char *file, char *argv, size_t *size)
 	else
 	{
 		*size = buf.st_size;
-		if ((ret = mmap(0, buf.st_size + 1000, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0)) == MAP_FAILED)
+		if ((ret = mmap(0, buf.st_size + 1000, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE, fd, 0)) == MAP_FAILED)
 		{
 			close(fd);
 			dprintf(2, "%s: error: Can't load %s in memory.\n", argv, file);
@@ -57,35 +57,29 @@ void print_maps()
 	printf("%s\n", buffer);
 }
 
-size_t	find_gap(Elf64_Ehdr *hdr, void *file, size_t section_text_offset, size_t *segment_vaddr	)
+size_t	find_gap(Elf64_Ehdr *hdr, void *file, size_t section_text_offset, size_t *segment_vaddr, size_t shellcode_size)
 {
 	int	nbr;
 	size_t	gap;
-	Elf64_Phdr *p_hdr_next;
 	Elf64_Phdr *p_hdr;
+	Elf64_Phdr *p_hdr_next;
 
 	nbr = 0;
 	while (nbr < hdr->e_phnum)
 	{
 		p_hdr = file + hdr->e_phoff + nbr * hdr->e_phentsize;
-		printf("offset : %p - size : %lX\n", (void*)p_hdr->p_offset, p_hdr->p_filesz);
-		printf("vaddr : %lX - paddr : %lX\n", p_hdr->p_vaddr, p_hdr->p_paddr);
-		// if (nbr == 2)
-		// {
-
 		if (p_hdr->p_offset <= section_text_offset && p_hdr->p_offset + p_hdr->p_filesz >= section_text_offset)
 		{
-			printf("program of .text -\n");
-			p_hdr->p_flags |= PF_W;
-			p_hdr->p_flags |= PF_W;
-			p_hdr_next = (Elf64_Phdr *)(file + hdr->e_phoff + (nbr + 1) * hdr->e_phentsize);
+			p_hdr_next = file + hdr->e_phoff + (nbr + 1) * hdr->e_phentsize;
+			printf("found gap at : %lX, his size is  : %lX\n", p_hdr->p_offset + p_hdr->p_filesz, p_hdr_next->p_offset - (p_hdr->p_offset + p_hdr->p_filesz));
+			printf("segment virtual and physical address : %lX and %lX\n", p_hdr->p_vaddr, p_hdr->p_paddr);
+			// p_hdr->p_flags |= PF_W;
 			gap = p_hdr->p_offset + p_hdr->p_filesz;
 			// *segment_vaddr = p_hdr_next->p_offset - (p_hdr->p_offset + p_hdr->p_filesz);
 			*segment_vaddr = p_hdr->p_vaddr;
-			p_hdr->p_filesz = p_hdr_next->p_offset - p_hdr->p_offset;
-			p_hdr->p_memsz = p_hdr_next->p_offset - p_hdr->p_offset;
-			printf("offset n: %lx -> %lx\noffset n + 1: %lx -> %lx\n", p_hdr->p_offset, p_hdr->p_offset + p_hdr->p_filesz, p_hdr_next->p_offset, p_hdr_next->p_offset + p_hdr_next->p_filesz);
-			return (gap);
+			p_hdr->p_filesz += shellcode_size;
+			p_hdr->p_memsz += shellcode_size;
+			return (gap + 8);
 		}
 		if (nbr == hdr->e_phnum - 1)
 		{
@@ -107,19 +101,52 @@ size_t	find_st_offset(Elf64_Ehdr *hdr, void *file, void *str_tab)
 	{
 		s_hdr = file + hdr->e_shoff + nbr * hdr->e_shentsize;
 		if (ft_strequ(s_hdr->sh_name + str_tab, ".text"))
-		{
-			printf("section text offset : %p\n", (void*)s_hdr->sh_offset);
 			return (s_hdr->sh_offset);
-		}
-		printf("section : %s - offset : %p - size : %lu\n", (char*)(s_hdr->sh_name + str_tab), (void*)s_hdr->sh_offset, s_hdr->sh_size);
 		nbr++;
 	}
 	return (0);
 }
 
+Elf64_Shdr	*find_st_orgin(void *file)
+{
+	Elf64_Ehdr	*hdr;
+	void	*str_tab;
+	int	nbr;
+	Elf64_Shdr	*s_hdr;
+
+	hdr = (Elf64_Ehdr*)file;
+	str_tab = get_shstrtab(file, hdr);
+
+	nbr = 0;
+	while (nbr < hdr->e_shnum)
+	{
+		s_hdr = file + hdr->e_shoff + nbr * hdr->e_shentsize;
+		if (ft_strequ(s_hdr->sh_name + str_tab, ".text"))
+			return (s_hdr);
+		nbr++;
+	}
+	return (0);
+}
+
+void	memory_replace(void	*ptr, unsigned int to_search, unsigned int to_replace, size_t size)
+{
+	void	*end = ptr + size;
+	while (*(unsigned int*)ptr != to_search && ptr < end)
+	{
+		ptr++;
+	}
+	if (ptr == end)
+	{
+		printf("Error !\n");
+		return ;
+	}
+	printf("Replaced !\n");
+	*(unsigned int*)ptr = to_replace;
+}
+
 int main(int ac, char **av)
 {
-	// print_maps();
+	print_maps();
 
 	void	*file;
 	Elf64_Ehdr	*hdr;
@@ -130,29 +157,43 @@ int main(int ac, char **av)
 	size_t gap;
 
 
-	char shellcode[] = 	 "\x31\xc0\x48\xbb\xd1\x9d\x96\x91\xd0\x8c\x97\xff\x48\xf7\xdb\x53\x54\x5f\x99\x52\x57\x54\x5e\xb0\x3b\x0f\x05";
-	if (ac != 2)
+	void	*origin;
+	size_t	size_origin;
+	Elf64_Shdr	*shdr_text_origin;
+
+
+	if (ac != 3)
 	{
-		dprintf(2, "usage: %s program\n", av[0]);
+		dprintf(2, "usage: %s program origin\n", av[0]);
 		return (1);
 	}
 	if ((file = open_file(av[1], av[0], &size)) == NULL)
 	{
 		return (2);
 	}
+	if ((origin = open_file(av[2], av[0], &size_origin)) == NULL)
+	{
+		return (2);
+	}
 	hdr = (Elf64_Ehdr*)file;
+	hdr->e_type = ET_EXEC;
 	if (hdr->e_ident[EI_CLASS] != ELFCLASS64)
 	{
 		dprintf(2, "%s: error: File architecture for %s not suported. x86_64 only\n", av[0], av[1]);
 		return (3);
 	}
+	shdr_text_origin = find_st_orgin(origin);
+	printf(".text of %s : %lx\n", av[2], shdr_text_origin->sh_offset);
 	str_tab = get_shstrtab(file, hdr);
 	section_text_offset = find_st_offset(hdr, file, str_tab);
 
-	gap = find_gap(hdr, file, section_text_offset, &segment_vaddr);
-	printf("found gap of size %lX at address : %lx\n", segment_vaddr, gap);
-	ft_memcpy(file + gap, shellcode, sizeof(shellcode));
+
+	gap = find_gap(hdr, file, section_text_offset, &segment_vaddr, shdr_text_origin->sh_size);
+	printf("found gap of vaddr %lX at address : %lx\n", segment_vaddr, gap);
+	printf("writing it at address : %lx\n", gap);
+	memory_replace(origin + shdr_text_origin->sh_offset, 0x22222222, hdr->e_entry, shdr_text_origin->sh_size);
+	ft_memcpy(file + gap, origin + shdr_text_origin->sh_offset, shdr_text_origin->sh_size);
 	hdr->e_entry = (size_t)(gap + segment_vaddr);
-	write_woody(file, size + 1000);
+	write_woody(file, size);
 	return (0);
 }

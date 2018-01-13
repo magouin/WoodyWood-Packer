@@ -14,7 +14,8 @@ NAME = woody_woodpacker
 NAME_ASM = exec
 
 CC = gcc
-CFLAGS =  -Wextra -Wall -g -fno-stack-protector -z execstack -no-pie
+CFLAGS =  -Wextra -Wall -g 
+
 LFLAGS = -lft
 LIB_DIR=./lib/
 
@@ -62,6 +63,7 @@ clean:
 fclean: clean
 	@rm -fv $(NAME)
 	@rm -fv $(NAME_ASM)
+	@rm -fv woody
 	@make -C libft fclean
 	@rmdir lib 2> /dev/null || true
 
