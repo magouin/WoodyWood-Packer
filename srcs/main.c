@@ -91,7 +91,7 @@ size_t	find_gap(Elf64_Ehdr *hdr, void *file, size_t section_text_offset, size_t 
 	return (0);
 }
 
-size_t	find_st_offset(Elf64_Ehdr *hdr, void *file, void *str_tab)
+Elf64_Shdr	*find_st_hdr(Elf64_Ehdr *hdr, void *file, void *str_tab)
 {
 	int	nbr;
 	Elf64_Shdr	*s_hdr;
@@ -101,10 +101,10 @@ size_t	find_st_offset(Elf64_Ehdr *hdr, void *file, void *str_tab)
 	{
 		s_hdr = file + hdr->e_shoff + nbr * hdr->e_shentsize;
 		if (ft_strequ(s_hdr->sh_name + str_tab, ".text"))
-			return (s_hdr->sh_offset);
+			return (s_hdr);
 		nbr++;
 	}
-	return (0);
+	return (NULL);
 }
 
 Elf64_Shdr	*find_st_orgin(void *file)
@@ -146,13 +146,13 @@ void	memory_replace(void	*ptr, unsigned int to_search, unsigned int to_replace, 
 
 int main(int ac, char **av)
 {
-	print_maps();
+	// print_maps();
 
 	void	*file;
 	Elf64_Ehdr	*hdr;
 	void	*str_tab;
 	size_t size;
-	size_t	section_text_offset;
+	Elf64_Shdr	*shdr_text_file;
 	size_t	segment_vaddr;
 	size_t gap;
 
@@ -185,13 +185,14 @@ int main(int ac, char **av)
 	shdr_text_origin = find_st_orgin(origin);
 	printf(".text of %s : %lx\n", av[2], shdr_text_origin->sh_offset);
 	str_tab = get_shstrtab(file, hdr);
-	section_text_offset = find_st_offset(hdr, file, str_tab);
+	shdr_text_file = find_st_hdr(hdr, file, str_tab);
 
 
-	gap = find_gap(hdr, file, section_text_offset, &segment_vaddr, shdr_text_origin->sh_size);
+	gap = find_gap(hdr, file, shdr_text_file->sh_offset, &segment_vaddr, shdr_text_origin->sh_size);
 	printf("found gap of vaddr %lX at address : %lx\n", segment_vaddr, gap);
 	printf("writing it at address : %lx\n", gap);
 	memory_replace(origin + shdr_text_origin->sh_offset, 0x22222222, hdr->e_entry, shdr_text_origin->sh_size);
+	memory_replace(origin + shdr_text_origin->sh_offset, 0x33333333, shdr_text_file->sh_offset, shdr_text_origin->sh_size);
 	ft_memcpy(file + gap, origin + shdr_text_origin->sh_offset, shdr_text_origin->sh_size);
 	hdr->e_entry = (size_t)(gap + segment_vaddr);
 	write_woody(file, size);

@@ -14,7 +14,7 @@ NAME = woody_woodpacker
 NAME_ASM = exec
 
 CC = gcc
-CFLAGS =  -Wextra -Wall -g 
+CFLAGS =  -Wextra -Wall -g
 
 LFLAGS = -lft
 LIB_DIR=./lib/
@@ -42,7 +42,7 @@ $(NAME) : $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) -L $(LIB_DIR) $(LFLAGS) -o $@
 
 $(NAME_ASM) : $(OBJ_ASM)
-	ld $(OBJ_ASM) -o $@
+	ld $(OBJ_ASM) -o $@  -e main -dynamic-linker /lib/x86_64-linux-gnu/ld-2.24.so -lc
 
 $(OBJ_ASM_PATH)%.o: $(SRC_ASM_PATH)%.s
 	mkdir -p $(OBJ_ASM_PATH)
