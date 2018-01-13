@@ -14,7 +14,7 @@ NAME = woody_woodpacker
 NAME_ASM = exec
 
 CC = gcc
-CFLAGS =  -Wextra -Wall -g
+CFLAGS =  -Wextra -Wall -g -fno-stack-protector -z execstack -no-pie
 LFLAGS = -lft
 LIB_DIR=./lib/
 

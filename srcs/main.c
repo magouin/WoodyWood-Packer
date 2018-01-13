@@ -33,7 +33,7 @@ void *open_file(char *file, char *argv, size_t *size)
 	return (ret);
 }
 
-int write_woody(void *file, size_t size)
+void write_woody(void *file, size_t size)
 {
 	int fd = open("woody", O_CREAT | O_WRONLY, 0744);
 
@@ -57,26 +57,80 @@ void print_maps()
 	printf("%s\n", buffer);
 }
 
+size_t	find_gap(Elf64_Ehdr *hdr, void *file, size_t section_text_offset, size_t *segment_vaddr	)
+{
+	int	nbr;
+	size_t	gap;
+	Elf64_Phdr *p_hdr_next;
+	Elf64_Phdr *p_hdr;
+
+	nbr = 0;
+	while (nbr < hdr->e_phnum)
+	{
+		p_hdr = file + hdr->e_phoff + nbr * hdr->e_phentsize;
+		printf("offset : %p - size : %lX\n", (void*)p_hdr->p_offset, p_hdr->p_filesz);
+		printf("vaddr : %lX - paddr : %lX\n", p_hdr->p_vaddr, p_hdr->p_paddr);
+		// if (nbr == 2)
+		// {
+
+		if (p_hdr->p_offset <= section_text_offset && p_hdr->p_offset + p_hdr->p_filesz >= section_text_offset)
+		{
+			printf("program of .text -\n");
+			p_hdr->p_flags |= PF_W;
+			p_hdr->p_flags |= PF_W;
+			p_hdr_next = (Elf64_Phdr *)(file + hdr->e_phoff + (nbr + 1) * hdr->e_phentsize);
+			gap = p_hdr->p_offset + p_hdr->p_filesz;
+			// *segment_vaddr = p_hdr_next->p_offset - (p_hdr->p_offset + p_hdr->p_filesz);
+			*segment_vaddr = p_hdr->p_vaddr;
+			p_hdr->p_filesz = p_hdr_next->p_offset - p_hdr->p_offset;
+			p_hdr->p_memsz = p_hdr_next->p_offset - p_hdr->p_offset;
+			printf("offset n: %lx -> %lx\noffset n + 1: %lx -> %lx\n", p_hdr->p_offset, p_hdr->p_offset + p_hdr->p_filesz, p_hdr_next->p_offset, p_hdr_next->p_offset + p_hdr_next->p_filesz);
+			return (gap);
+		}
+		if (nbr == hdr->e_phnum - 1)
+		{
+		}
+		// }
+		printf("\n");
+		nbr++;
+	}
+	return (0);
+}
+
+size_t	find_st_offset(Elf64_Ehdr *hdr, void *file, void *str_tab)
+{
+	int	nbr;
+	Elf64_Shdr	*s_hdr;
+
+	nbr = 0;
+	while (nbr < hdr->e_shnum)
+	{
+		s_hdr = file + hdr->e_shoff + nbr * hdr->e_shentsize;
+		if (ft_strequ(s_hdr->sh_name + str_tab, ".text"))
+		{
+			printf("section text offset : %p\n", (void*)s_hdr->sh_offset);
+			return (s_hdr->sh_offset);
+		}
+		printf("section : %s - offset : %p - size : %lu\n", (char*)(s_hdr->sh_name + str_tab), (void*)s_hdr->sh_offset, s_hdr->sh_size);
+		nbr++;
+	}
+	return (0);
+}
+
 int main(int ac, char **av)
 {
-	print_maps();
+	// print_maps();
 
 	void	*file;
 	Elf64_Ehdr	*hdr;
-	Elf64_Shdr	*sections;
 	void	*str_tab;
-	Elf64_Shdr	*s_hdr;
-	Elf64_Phdr	*p_hdr;
 	size_t size;
-	void	*section_text_offset;
-char shellcode[] = "\xeb\x19\x31\xc0\xb0\x04\x31\xdb"
-                   "\xb3\x01\x59\x31\xd2\xb2\x12\xcd"
-                   "\x80\x31\xc0\xb0\x01\x31\xdb\xb3"
-                   "\x01\xcd\x80\xe8\xe2\xff\xff\xff"
-                   "\x20\x79\x30\x75\x20\x73\x70\x33"
-                   "\x34\x6b\x20\x31\x33\x33\x37\x20"
-                   "\x3f\x20";
+	size_t	section_text_offset;
+	size_t	segment_vaddr;
+	size_t gap;
 
+
+	char shellcode[] = 	 "\x31\xc0\x48\xbb\xd1\x9d\x96\x91\xd0\x8c\x97\xff\x48\xf7\xdb\x53\x54\x5f\x99\x52\x57\x54\x5e\xb0\x3b\x0f\x05";
 	if (ac != 2)
 	{
 		dprintf(2, "usage: %s program\n", av[0]);
@@ -92,46 +146,13 @@ char shellcode[] = "\xeb\x19\x31\xc0\xb0\x04\x31\xdb"
 		dprintf(2, "%s: error: File architecture for %s not suported. x86_64 only\n", av[0], av[1]);
 		return (3);
 	}
-	hdr->e_entry = (size_t)(size);
 	str_tab = get_shstrtab(file, hdr);
+	section_text_offset = find_st_offset(hdr, file, str_tab);
 
-	int	nbr = 0;
-	while (nbr < hdr->e_shnum)
-	{
-		s_hdr = file + hdr->e_shoff + nbr * hdr->e_shentsize;
-		if (ft_strequ(s_hdr->sh_name + str_tab, ".text"))
-		{
-			printf("section text offset : %p\n", (void*)s_hdr->sh_offset);
-			section_text_offset = s_hdr->sh_offset;
-		}
-		if (nbr == hdr->e_shnum - 1)
-		{
-		}
-		printf("section : %s - offset : %p - size : %d\n", s_hdr->sh_name + str_tab, (void*)s_hdr->sh_offset, s_hdr->sh_size);
-		nbr++;
-	}
-
-	nbr = 0;
-	while (nbr < hdr->e_phnum)
-	{
-		p_hdr = file + hdr->e_phoff + nbr * hdr->e_phentsize;
-		printf("offset : %p - size : %X\n", (void*)p_hdr->p_offset, p_hdr->p_filesz);
-		printf("vaddr : %p - paddr : %X\n", p_hdr->p_vaddr, p_hdr->p_paddr);
-		// if (nbr == 2)
-		// {
-		if (p_hdr->p_offset <= section_text_offset && p_hdr->p_offset + p_hdr->p_filesz >= section_text_offset)
-		{
-			printf("program of .text -\n");
-			p_hdr->p_flags |= PF_W;
-			p_hdr->p_flags |= PF_W;
-		}
-		if (nbr == hdr->e_phnum - 1)
-		{
-		}
-		// }
-		printf("\n");
-		nbr++;
-	}
-	ft_memcpy(file + size, shellcode, sizeof(shellcode));
+	gap = find_gap(hdr, file, section_text_offset, &segment_vaddr);
+	printf("found gap of size %lX at address : %lx\n", segment_vaddr, gap);
+	ft_memcpy(file + gap, shellcode, sizeof(shellcode));
+	hdr->e_entry = (size_t)(gap + segment_vaddr);
 	write_woody(file, size + 1000);
+	return (0);
 }
