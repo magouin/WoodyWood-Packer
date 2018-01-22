@@ -1,4 +1,7 @@
 SRC_NAME = main.c \
+			crypto.c \
+			elf_funcs.c \
+			file.c
 
 SRC_ASM_NAME = main.s \
 
