@@ -23,6 +23,6 @@ void	memory_replace(void	*ptr, unsigned int to_search, unsigned int to_replace, 
 
 
 unsigned char	*get_key(void);
-void	crypt_xor(char	*addr, size_t size, unsigned char *key);
+void	crypt_xor(char	*addr, size_t size, unsigned char *key, void *file);
 
 #endif

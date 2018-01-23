@@ -64,7 +64,8 @@ int main(int ac, char **av)
 	memory_replace(origin + shdr_text_origin->sh_offset, 0x55555555, gap - shdr_text_file->sh_offset, shdr_text_origin->sh_size);
 	ft_memcpy(file + gap, key, KEY_SIZE);
 	ft_memcpy(file + gap + KEY_SIZE, origin + shdr_text_origin->sh_offset, shdr_text_origin->sh_size);
-	crypt_xor(file + shdr_text_file->sh_offset + KEY_SIZE, gap - shdr_text_file->sh_offset, key);
+
+	crypt_xor(file + shdr_text_file->sh_offset, gap - shdr_text_file->sh_offset, key, file);
 	hdr->e_entry = (size_t)(gap + segment_vaddr + KEY_SIZE);
 	write_woody(file, size);
 	return (0);
