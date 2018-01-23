@@ -70,9 +70,6 @@ fclean: clean
 	@make -C libft fclean
 	@rmdir lib 2> /dev/null || true
 
-hello:
-	nasm -f elf64 -o obj/hello.o asm/hello_world.s ; ld obj/hello.o -o hello
-
 re: fclean all
 
 .PHONY : all clean fclean re

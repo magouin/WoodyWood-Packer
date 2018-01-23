@@ -9,7 +9,7 @@
 # include <sys/syscall.h>
 # include <sys/mman.h>
 
-# define KEY_SIZE 10
+# define KEY_SIZE 64
 # include <elf.h>
 
 size_t	find_gap(Elf64_Ehdr *hdr, void *file, size_t section_text_offset, size_t *segment_vaddr, size_t shellcode_size);
@@ -23,6 +23,6 @@ void	memory_replace(void	*ptr, unsigned int to_search, unsigned int to_replace, 
 
 
 unsigned char	*get_key(void);
-void	crypt_xor(char	*addr, size_t size, unsigned char *key, void *file);
+void	crypt_xor(char	*addr, size_t size, unsigned char *key);
 
 #endif

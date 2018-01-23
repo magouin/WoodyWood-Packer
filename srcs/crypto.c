@@ -28,17 +28,13 @@ unsigned char	*get_key(void)
 	return (buffer);
 }
 
-void	crypt_xor(char	*addr, size_t size, unsigned char *key, void *file)
+void	crypt_xor(char	*addr, size_t size, unsigned char *key)
 {
 	size_t	i;
 
-	unsigned char *cp;
-
-	cp = (unsigned char *)addr;
 	i = 0;
 	while (i < size)
 	{
-			printf("crypting byte [%02x] at offset %#lx with key [%02x], result :[%02x]\n", cp[i], (void*)addr  + i - file, key[i % KEY_SIZE], cp[i] ^ key[i % KEY_SIZE]);
 		addr[i] = addr[i] ^ key[i % KEY_SIZE];
 		i++;
 	}
