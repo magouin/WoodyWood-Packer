@@ -53,6 +53,6 @@ void	memory_replace(void	*ptr, unsigned int to_search, unsigned int to_replace, 
 		printf("Error !\n");
 		return ;
 	}
-	printf("Replaced !\n");
+	printf("Replaced ! [%#x] by [%#x]\n", to_search, to_replace);
 	*(unsigned int*)ptr = to_replace;
 }

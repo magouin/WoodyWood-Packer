@@ -38,11 +38,8 @@ void	crypt_xor(char	*addr, size_t size, unsigned char *key, void *file)
 	i = 0;
 	while (i < size)
 	{
-		if (i < 10)
-		{
 			printf("crypting byte [%02x] at offset %#lx with key [%02x], result :[%02x]\n", cp[i], (void*)addr  + i - file, key[i % KEY_SIZE], cp[i] ^ key[i % KEY_SIZE]);
-		}
-		addr[i] = addr[i] ^* key[i % KEY_SIZE];
+		addr[i] = addr[i] ^ key[i % KEY_SIZE];
 		i++;
 	}
 }

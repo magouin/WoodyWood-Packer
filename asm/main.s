@@ -34,7 +34,7 @@ condition:
 
 
 	inc r12
-	cmp r12, rdx
+	cmp r12, r11
 	jne condition
 
 epilogue:

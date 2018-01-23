@@ -60,12 +60,12 @@ int main(int ac, char **av)
 	printf("writing it at address : %lx\n", gap);
 	memory_replace(origin + shdr_text_origin->sh_offset, 0x22222222, hdr->e_entry, shdr_text_origin->sh_size);
 	memory_replace(origin + shdr_text_origin->sh_offset, 0x33333333, (unsigned int)KEY_SIZE, shdr_text_origin->sh_size);
-	memory_replace(origin + shdr_text_origin->sh_offset, 0x44444444, segment_vaddr + shdr_text_file->sh_offset + KEY_SIZE, shdr_text_origin->sh_size);
-	memory_replace(origin + shdr_text_origin->sh_offset, 0x55555555, gap - shdr_text_file->sh_offset, shdr_text_origin->sh_size);
+	memory_replace(origin + shdr_text_origin->sh_offset, 0x44444444, segment_vaddr + shdr_text_file->sh_offset, shdr_text_origin->sh_size);
+	memory_replace(origin + shdr_text_origin->sh_offset, 0x55555555, shdr_text_file->sh_size, shdr_text_origin->sh_size);
 	ft_memcpy(file + gap, key, KEY_SIZE);
 	ft_memcpy(file + gap + KEY_SIZE, origin + shdr_text_origin->sh_offset, shdr_text_origin->sh_size);
 
-	crypt_xor(file + shdr_text_file->sh_offset, gap - shdr_text_file->sh_offset, key, file);
+	crypt_xor(file + shdr_text_file->sh_offset, shdr_text_file->sh_size, key, file);
 	hdr->e_entry = (size_t)(gap + segment_vaddr + KEY_SIZE);
 	write_woody(file, size);
 	return (0);

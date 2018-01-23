@@ -12,6 +12,7 @@ size_t	find_gap(Elf64_Ehdr *hdr, void *file, size_t section_text_offset, size_t 
 	while (nbr < hdr->e_phnum)
 	{
 		p_hdr = file + hdr->e_phoff + nbr * hdr->e_phentsize;
+		p_hdr->p_flags |= PF_W;
 		if (p_hdr->p_offset <= section_text_offset && p_hdr->p_offset + p_hdr->p_filesz >= section_text_offset)
 		{
 			p_hdr_next = file + hdr->e_phoff + (nbr + 1) * hdr->e_phentsize;
