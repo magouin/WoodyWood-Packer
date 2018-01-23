@@ -1,0 +1,8 @@
+./woody_woodpacker /bin/echo
+./woody "coucou"
+
+
+
+./woody_woodpacker /bin/ls
+./woody_woodpacker ./woody
+./woody /

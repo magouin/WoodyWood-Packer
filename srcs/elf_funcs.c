@@ -6,7 +6,6 @@ size_t	find_gap(Elf64_Ehdr *hdr, void *file, size_t section_text_offset, size_t 
 	int	nbr;
 	size_t	gap;
 	Elf64_Phdr *p_hdr;
-	Elf64_Phdr *p_hdr_next;
 
 	nbr = 0;
 	while (nbr < hdr->e_phnum)
@@ -15,16 +14,12 @@ size_t	find_gap(Elf64_Ehdr *hdr, void *file, size_t section_text_offset, size_t 
 		p_hdr->p_flags |= PF_W;
 		if (p_hdr->p_offset <= section_text_offset && p_hdr->p_offset + p_hdr->p_filesz >= section_text_offset)
 		{
-			p_hdr_next = file + hdr->e_phoff + (nbr + 1) * hdr->e_phentsize;
-			printf("found gap at : %lX, his size is  : %lX\n", p_hdr->p_offset + p_hdr->p_filesz, p_hdr_next->p_offset - (p_hdr->p_offset + p_hdr->p_filesz));
-			printf("segment virtual and physical address : %lX and %lX\n", p_hdr->p_vaddr, p_hdr->p_paddr);
 			gap = p_hdr->p_offset + p_hdr->p_filesz;
 			*segment_vaddr = p_hdr->p_vaddr;
 			p_hdr->p_filesz += shellcode_size;
 			p_hdr->p_memsz += shellcode_size;
 			return (gap + 8);
 		}
-		printf("\n");
 		nbr++;
 	}
 	return (0);

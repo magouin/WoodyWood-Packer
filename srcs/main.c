@@ -31,15 +31,23 @@ int main(int ac, char **av)
 
 	key = get_key();
 
-	if (ac != 3)
+	if (ac != 2 && ac != 3)
 	{
-		dprintf(2, "usage: %s program origin\n", av[0]);
+		dprintf(2, "usage: %s program [origin]\n", av[0]);
 		return (1);
 	}
 	if ((file = open_file(av[1], av[0], &size)) == NULL)
 		return (2);
-	if ((origin = open_file(av[2], av[0], &size_origin)) == NULL)
-		return (2);
+	if (ac == 3)
+	{
+		if ((origin = open_file(av[2], av[0], &size_origin)) == NULL)
+			return (2);
+	}
+	else
+	{
+		if ((origin = open_file("./exec", av[0], &size_origin)) == NULL)
+			return (2);		
+	}
 	hdr = (Elf64_Ehdr*)file;
 	hdr->e_type = ET_EXEC;
 	if (hdr->e_ident[EI_CLASS] != ELFCLASS64)
@@ -48,7 +56,6 @@ int main(int ac, char **av)
 		return (3);
 	}
 	shdr_text_origin = find_st_orgin(origin);
-	printf(".text of %s : %lx\n", av[2], shdr_text_origin->sh_offset);
 	str_tab = get_shstrtab(file, hdr);
 	shdr_text_file = find_st_hdr(hdr, file, str_tab);
 
@@ -56,8 +63,6 @@ int main(int ac, char **av)
 	gap = find_gap(hdr, file, shdr_text_file->sh_offset, &segment_vaddr, shdr_text_origin->sh_size);
 	gap += 16 - gap % 16;
 
-	printf("found gap of vaddr %lX at address : %lx\n", segment_vaddr, gap);
-	printf("writing it at address : %lx\n", gap);
 	memory_replace(origin + shdr_text_origin->sh_offset, 0x22222222, hdr->e_entry, shdr_text_origin->sh_size);
 	memory_replace(origin + shdr_text_origin->sh_offset, 0x33333333, (unsigned int)KEY_SIZE, shdr_text_origin->sh_size);
 	memory_replace(origin + shdr_text_origin->sh_offset, 0x44444444, segment_vaddr + shdr_text_file->sh_offset, shdr_text_origin->sh_size);

@@ -51,8 +51,7 @@ void	memory_replace(void	*ptr, unsigned int to_search, unsigned int to_replace, 
 	if (ptr == end)
 	{
 		printf("Error !\n");
-		return ;
+		exit(0);
 	}
-	printf("Replaced ! [%#x] by [%#x]\n", to_search, to_replace);
 	*(unsigned int*)ptr = to_replace;
 }
