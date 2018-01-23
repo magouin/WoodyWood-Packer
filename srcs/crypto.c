@@ -30,7 +30,12 @@ unsigned char	*get_key(void)
 
 void	crypt_xor(char	*addr, size_t size, unsigned char *key)
 {
-	(void)addr;
-	(void)size;
-	(void)key;
+	size_t	i;
+
+	i = 0;
+	while (i < size)
+	{
+		addr[i] ^= key[i % KEY_SIZE];
+		i++;
+	}
 }

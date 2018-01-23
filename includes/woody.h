@@ -9,7 +9,7 @@
 # include <sys/syscall.h>
 # include <sys/mman.h>
 
-# define KEY_SIZE 256
+# define KEY_SIZE 10
 # include <elf.h>
 
 size_t	find_gap(Elf64_Ehdr *hdr, void *file, size_t section_text_offset, size_t *segment_vaddr, size_t shellcode_size);
