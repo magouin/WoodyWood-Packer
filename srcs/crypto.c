@@ -32,10 +32,14 @@ void	crypt_xor(char	*addr, size_t size, unsigned char *key)
 {
 	size_t	i;
 
+	printf("Before : \n");
+	print_memory(addr, size);
 	i = 0;
 	while (i < size)
 	{
 		addr[i] = addr[i] ^ key[i % KEY_SIZE];
 		i++;
 	}
+		printf("After : \n");
+		print_memory(addr, size);
 }

@@ -25,4 +25,7 @@ void	memory_replace(void	*ptr, unsigned int to_search, unsigned int to_replace, 
 unsigned char	*get_key(void);
 void	crypt_xor(char	*addr, size_t size, unsigned char *key);
 
+void print_memory(const void *start, size_t size);
+
+
 #endif
