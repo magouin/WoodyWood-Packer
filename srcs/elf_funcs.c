@@ -1,5 +1,25 @@
 #include <woody.h>
 
+int		grow_last_section(Elf64_Ehdr *hdr, void *file, Elf64_Phdr *p_hdr, size_t shellcode_size)
+{
+	size_t	nbr;
+	Elf64_Shdr	*shdr;
+
+	nbr = 0;
+	while (nbr < hdr->e_shnum)
+	{
+		shdr = file + hdr->e_shoff + nbr * hdr->e_shentsize;
+		if (shdr->sh_offset + shdr->sh_size == p_hdr->p_offset + p_hdr->p_filesz)
+		{
+			printf("shdr->sh_size avant modif = %p\n", shdr->sh_size);
+			shdr->sh_size = shdr->sh_size + KEY_SIZE + shellcode_size;
+			shdr->sh_size += 16 - shdr->sh_size % 16;
+			printf("shdr->sh_size apres modif = %p\n", shdr->sh_size);
+			printf("KEY_SIZE + shellcode_size = %x\n", KEY_SIZE + shellcode_size);
+		}
+		nbr++;
+	}
+}
 
 size_t	find_gap(Elf64_Ehdr *hdr, void *file, size_t section_text_offset, size_t *segment_vaddr, size_t shellcode_size)
 {
@@ -15,10 +35,16 @@ size_t	find_gap(Elf64_Ehdr *hdr, void *file, size_t section_text_offset, size_t 
 		if (p_hdr->p_offset <= section_text_offset && p_hdr->p_offset + p_hdr->p_filesz >= section_text_offset)
 		{
 			gap = p_hdr->p_offset + p_hdr->p_filesz;
+			grow_last_section(hdr, file, p_hdr, shellcode_size);
 			*segment_vaddr = p_hdr->p_vaddr;
-			p_hdr->p_filesz += shellcode_size;
-			p_hdr->p_memsz += shellcode_size;
-			return (gap + 8);
+
+			p_hdr->p_filesz += KEY_SIZE + shellcode_size;
+			p_hdr->p_filesz += 16 - p_hdr->p_filesz % 16;;
+
+			p_hdr->p_memsz += KEY_SIZE + shellcode_size;
+			p_hdr->p_memsz += 16 - p_hdr->p_memsz % 16;;
+			printf("gap : %p\n", gap);
+			return (gap);
 		}
 		nbr++;
 	}

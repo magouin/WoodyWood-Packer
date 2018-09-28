@@ -59,9 +59,10 @@ int main(int ac, char **av)
 	str_tab = get_shstrtab(file, hdr);
 	shdr_text_file = find_st_hdr(hdr, file, str_tab);
 
-
 	gap = find_gap(hdr, file, shdr_text_file->sh_offset, &segment_vaddr, shdr_text_origin->sh_size);
 	gap += 16 - gap % 16;
+	printf("aligned gap : %p\n", gap);
+	printf("segment_vaddr : %p\n:", segment_vaddr);
 
 	memory_replace(origin + shdr_text_origin->sh_offset, 0x22222222, hdr->e_entry, shdr_text_origin->sh_size);
 	memory_replace(origin + shdr_text_origin->sh_offset, 0x33333333, (unsigned int)KEY_SIZE, shdr_text_origin->sh_size);
@@ -73,5 +74,6 @@ int main(int ac, char **av)
 	crypt_xor(file + shdr_text_file->sh_offset, shdr_text_file->sh_size, key);
 	hdr->e_entry = (size_t)(gap + segment_vaddr + KEY_SIZE);
 	write_woody(file, size);
+	free(key);
 	return (0);
 }

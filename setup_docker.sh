@@ -17,4 +17,4 @@ fi
 
 echo -e "\nYou should run the command eval \$(docker-machine env Char) before running ./run.sh\n"
 eval $(docker-machine env Char)
-docker build . -t woody || exit 4
+docker build -t woody . || exit 4
