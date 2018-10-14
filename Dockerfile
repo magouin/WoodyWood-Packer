@@ -7,6 +7,7 @@ RUN curl 'https://raw.githubusercontent.com/JeremShy/RainFall/master/config' | t
 RUN apt-get install -y bsdmainutils
 RUN apt-get install -y man
 RUN apt-get install -y zsh
+RUN apt-get install -y clang
 RUN sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" || true
 RUN git config --global user.email "jcamhi@student.42.fr"
 
