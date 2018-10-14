@@ -1,14 +1,7 @@
 ./woody_woodpacker /bin/echo
-./woody "coucou"
-
-
-
 ./woody_woodpacker /bin/ls
 ./woody_woodpacker ./woody
-./woody_woodpacker ./woody_woodpacker
-./woody /
+???
+
 
 Binaires corrompus
-
-Shared object ne doit PAS marcher
-
