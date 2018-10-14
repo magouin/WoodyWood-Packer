@@ -93,7 +93,7 @@ LIB_PATH = ./
 
 NAME = ../lib/libft.a
 
-CC = gcc
+CC = clang
 
 CFLAGS = -Werror -Wall -Wextra -c -g
 

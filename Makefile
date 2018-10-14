@@ -17,7 +17,7 @@ SRC_ASM_PATH = ./asm/
 NAME = woody_woodpacker
 NAME_ASM = exec
 
-CC = gcc
+CC = clang
 CFLAGS =  -Wextra -Wall -g
 
 LFLAGS = -lft
