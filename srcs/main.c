@@ -29,7 +29,6 @@ int main(int ac, char **av)
 	Elf64_Shdr	*shdr_text_origin;
 
 
-	key = get_key();
 
 	if (ac != 2 && ac != 3)
 	{
@@ -49,12 +48,19 @@ int main(int ac, char **av)
 			return (2);		
 	}
 	hdr = (Elf64_Ehdr*)file;
-	hdr->e_type = ET_EXEC;
 	if (hdr->e_ident[EI_CLASS] != ELFCLASS64)
 	{
 		dprintf(2, "%s: error: File architecture for %s not suported. x86_64 only\n", av[0], av[1]);
 		return (3);
 	}
+	if (hdr->e_type != ET_EXEC)
+	{
+		dprintf(2, "%s: error: %s is not an executable.\n", av[0], av[1]);
+		return (4);
+	}
+
+	key = get_key();
+
 	shdr_text_origin = find_st_orgin(origin);
 	str_tab = get_shstrtab(file, hdr);
 	shdr_text_file = find_st_hdr(hdr, file, str_tab);
